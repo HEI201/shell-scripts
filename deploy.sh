@@ -16,32 +16,38 @@ PORT=22
 USER=centos
 PASSWORD=123456
 codePath=/home/work/code/s90_platform
-currentPath=$(pwd)
 
-eval "$(ssh-agent)"
+# start SSH-Agent and get its pid
+sshAgentPid=$(eval `ssh-agent` | grep -Eo "[0-9]+")
 ssh-add ~/.ssh/phab
+
+if [[ $1 =~ [a] ]]
+then
+ echo "ssh agent start authenticated file addid"
+ exit 0
+fi
 
 cd ${codePath} || echo 'cd code path failed' || exit 1
 pwd
 
-if [ "$1" = "i" ]
+if [[ $1 =~ [i] ]]
 then
+ echo "run install"
  npm install
 fi
 
-npm run pack:linux
-cd "${currentPath}" || echo 'go back deploy.sh directory failed'
-pwd
+if [[ $1 =~ [p] ]]
+then
+ echo "run pack"
+ npm run pack:linux
+fi
+
 version=$(cat <${codePath}/package.json | jq '.version')
-echo "$version"
-echo "${version//\"/}"
 version=${version//\"/}
 filename=s90_platform-v${version}.tar.gz
-echo "${filename}"
 
 clientDir=${codePath}/dist
 serverDir=/home/centos/project
-pwd
 
 echo 'uploading'
 lftp -u ${USER},${PASSWORD} sftp://${TARGETIP}:${PORT} <<EOF
@@ -56,6 +62,9 @@ echo 'ssh logging in'
 ssh 189 <<EOF
 cd ${serverDir}
 tar -xzvf ${filename}
+exit
 EOF
 
-echo "update ${filename} finished"
+kill -9 ${sshAgentPid}
+
+echo "update ${TARGETIP} ${filename} finished"

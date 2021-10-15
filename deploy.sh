@@ -19,11 +19,13 @@ codePath=/home/work/code/s90_platform
 
 # start SSH-Agent and get its pid
 sshAgentPid=$(eval `ssh-agent` | grep -Eo "[0-9]+")
-ssh-add ~/.ssh/phab
+sshAddResult=$(ssh-add ~/.ssh/phab)
+echo "ssh agent pid: ${sshAgentPid}"
+echo "ssh file added result: ${sshAddResult}"
 
 if [[ $1 =~ [a] ]]
 then
- echo "ssh agent start authenticated file addid"
+ echo "ssh agent start authenticated file added"
  exit 0
 fi
 
@@ -59,7 +61,7 @@ EOF
 echo 'uploaded'
 
 echo 'ssh logging in'
-ssh 189 <<EOF
+ssh 189 /bin/bash <<EOF
 cd ${serverDir}
 tar -xzvf ${filename}
 exit

@@ -36,7 +36,7 @@ if [[ $1 =~ [i] ]]; then
 fi
 
 if [[ $1 =~ [p] ]]; then
-    echo "run pack"
+    echo "run pack:linux"
     npm run pack:linux
 fi
 

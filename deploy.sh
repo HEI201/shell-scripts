@@ -9,7 +9,7 @@
 
 # config ssh
 
-# `bash deploy.sh i` to run the script
+# `bash deploy.sh [aip]` to run the script
 
 TARGETIP=10.111.222.189
 PORT=22

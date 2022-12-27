@@ -52,3 +52,12 @@ Invoke-SSHCommand -Index $SessionID.sessionid -Command $Command # Invoke Command
 Write-Output "Decompress complete."
 # exit ssh
 Read-Host -Prompt "Press any key to exit..."
+
+# trouble shooting
+# if you get an error
+# ------------
+# Session operation has timed out
+# Cannot bind argument to parameter 'SessionId' because it is null.
+# ------------
+# try to login to the server via ssh using password manually and remember to accept the fingerprint
+# then run the script again

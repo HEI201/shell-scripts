@@ -35,4 +35,6 @@ Set-Location $trojanPath
 & $trojanPath/start.bat
 
 # keep the window open
-Read-Host -Prompt "Press Enter to exit"
+# Read-Host -Prompt "Press Enter to exit"
+
+exit 0

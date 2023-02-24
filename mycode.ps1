@@ -5,5 +5,5 @@ Start-Process "${env:LOCALAPPDATA}\Programs\Microsoft VS Code\Code.exe" -Argumen
 # exit 0
 # Read-Host -Prompt "Press Enter to exit"
 
-# sleep for 1 second to wait for VS Code to start
+# sleep for 2 second to wait for VS Code to start
 Start-Sleep -s 2

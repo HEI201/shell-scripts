@@ -14,7 +14,8 @@ if ($null -eq $trojan) {
 }
 
 # set the path to the trojan
-$basicPath = "C:/pp/trojan-cli"
+
+$basicPath = "${env:PortableProgram}/trojan-cli"
 
 
 if ($trojan -eq "1") {

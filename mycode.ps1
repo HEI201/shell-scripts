@@ -1,9 +1,11 @@
 # $VerbosePreference = 'SilentlyContinue'
 $folder = $PWD
-Start-Process "${env:LOCALAPPDATA}\Programs\Microsoft VS Code\Code.exe" -ArgumentList $folder
 
+Start-Process "${env:LOCALAPPDATA}\Programs\Microsoft VS Code\Code.exe" -ArgumentList $folder -Wait -WindowStyle Maximized
+
+# Write-Host $folder
 # exit 0
 # Read-Host -Prompt "Press Enter to exit"
 
 # sleep for 2 second to wait for VS Code to start
-Start-Sleep -s 2
+# Start-Sleep -s 2

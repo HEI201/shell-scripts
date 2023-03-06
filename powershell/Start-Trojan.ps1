@@ -1,6 +1,12 @@
 # do not echo the commands
 $VerbosePreference = "SilentlyContinue"
-
+# if already running, exit
+$processName = "trojan*"
+$process = Get-Process -Name $processName -ErrorAction SilentlyContinue
+if ($null -ne $process) {
+    Write-Host "Already running"
+    exit 0
+}
 # get parameter trojan from command line
 $trojan = $args[0]
 # if no parameter trojan prompt for it
@@ -34,6 +40,14 @@ else {
 Set-Location $trojanPath
 # call start script
 & $trojanPath/start.bat
+
+# log the start time
+# append a new line
+Write-Output "" | Out-File -FilePath $trojanPath/start.log -Append
+
+$now = Get-Date
+# trim empty lines before writing to file
+$now | Out-File -FilePath $trojanPath/start.log -Append -NoNewline
 
 # keep the window open
 # Read-Host -Prompt "Press Enter to exit"

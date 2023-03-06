@@ -1,1 +1,1 @@
-some scripts to run on windows powershell
+some shell scripts to turbo productivity

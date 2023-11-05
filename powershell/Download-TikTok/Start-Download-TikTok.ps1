@@ -12,6 +12,15 @@ Set-Location -Path $projectDir
 $configFilePath = "$projectDir\conf.ini"
 $ini = Get-IniContent -FilePath $configFilePath
 
+# read cookie from cookie.txt
+$cookie = Get-Content -Path "$projectDir\Download\cookie"
+$ini["cookie"]["cookie"] = $cookie
+$ini["category"]["category"] = 'id'
+$ini["max_workers"]["max_workers"] = 2
+$ini["update"]["update"] = 'no'
+$ini["prompt_done"]["prompt_done"] = 'no'
+$ini["path"]["path"] = "D:\Video\tiktok"
+
 # read links from urls.txt
 $urls = Get-Content -Path "$projectDir\Download\urls.txt"
 
@@ -40,6 +49,7 @@ foreach ($url in $urls) {
         python TikTokTool.py
     }
     catch {
+        Start-Sleep -Seconds 120
         continue
     }
 }

@@ -11,14 +11,15 @@ param (
 
 $currentPath = Get-Location
 
-# set youtube-dl project directory as current directory
-Set-Location -Path "D:\Dev\repo\youtube-dl"
+# save the youtube-dl project directory path to a variable
+$youtubedlPath = "D:\Dev\repo\youtube-dl"
+$env:PYTHONPATH += ";$youtubedlPath"
 
 $savedOption = ""
 # if the current switch is set, save the videos in the current directory
 if ($current) {
     # fix me: the path is not working, youtube-dl is replacing the : with #, this makes the path invalid
-    $savedOption = "-o $currentPath/%(title)s/%(title)s.%(ext)s"
+    $savedOption = "-o $currentPath/%(uploader)s/%(title)s/video.%(ext)s"
 }
 
 Write-Host $currentPath

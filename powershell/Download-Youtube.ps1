@@ -29,6 +29,7 @@ function DownloadVideo {
         $url,
         $option
     )
+    # -o option can not contain gbk characters
     if ($option) {
         python -m youtube_dl $url -o $option
         return

@@ -1,61 +1,74 @@
 # download the videos from a list of URLs using youtube-dl
 
-# read named url argument from the command line
-param (
-    [Parameter(Mandatory = $false)]
-    [string]$url,
-    # Parameter help description
-    [Parameter(Mandatory = $false)]
-    [switch]$current
-)
-
 $currentPath = Get-Location
 
-# save the youtube-dl project directory path to a variable
+# add youtube-dl module to the path
 $youtubedlPath = "D:\Dev\repo\youtube-dl"
 $env:PYTHONPATH += ";$youtubedlPath"
 
-$outputOption = ""
-$urlsPath = "D:\Video\youtube\youtube-urls.txt"
-# if the current switch is set, save the videos in the current directory
-if ($current) {
-    # fix me: the path is not working, youtube-dl is replacing the : with #, this makes the path invalid
-    $outputOption = "%(uploader)s/%(title)s/video.%(ext)s"
-    $urlsPath = "$currentPath/youtube-urls.txt"
+$urlsPath = "$currentPath/youtube-urls.txt"
+$youtubedlConfigFile = "$currentPath/youtube-dl.conf"
+
+# if urls file does not exist, exit
+if (-not (Test-Path $urlsPath)) {
+    Write-Host "file $urlsPath does not exist"
+    exit 0
+}
+
+# ensure log file exists
+if (-not (Test-Path "$currentPath\logs")) {
+    New-Item -Path "$currentPath\logs" -ItemType Directory
+}
+
+# add subtitles to the video without re-encoding
+function AddSubtitles {
+    param (
+        $videoPath,
+        $subtitlesPath,
+        $outputPath
+    )
+
+    & ffmpeg -i $videoPath -i $subtitlesPath -c copy -scodec mov_text $outputPath
 }
 
 function DownloadVideo {
     param (
-        $url,
-        $option
+        $url
     )
-    # -o option can not contain gbk characters
-    if ($option) {
-        python -m youtube_dl $url -o $option
-        return
+
+    python -m youtube_dl $url --config-location $youtubedlConfigFile
+    $exitStatus = $LASTEXITCODE
+
+    Write-Host "exit status: $exitStatus"
+
+    # timestamp
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+    # if the exit status is not 0, throw an exception
+    if ($exitStatus -ne 0) {
+        # write error log to the log file
+        Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] $url : exit status: $exitStatus"
+
+        throw "exit status: $exitStatus"
     }
-    python -m youtube_dl $url
+
+    # write success log to the log file
+    Add-Content -Path "$currentPath\logs\download.log" -Value "[$timestamp] $url"
 }
 
-if ($url) {
-    # download the video by calling python -m youtube_dl $url
-    # python -m youtube_dl $url $outputOption
-    DownloadVideo $url $outputOption
-    exit
+function  getUrls {
+    $urls = Get-Content -Path $urlsPath
+    # filter out the comment line and the empty line
+    $urls = $urls | Where-Object { $_ -notmatch "^#" } | Where-Object { $_ -ne "" }
+    return $urls
 }
 
-
-
-# set the path to the file containing the list of URLs
-$urls = Get-Content -Path $urlsPath
+$urls = getUrls
 
 # loop through the list of URLs
 foreach ($url in $urls) {
-    # download the video by calling python -m youtube_dl $url
-    # catch errors and continue with the next URL
     try {
-        # python -m youtube_dl $url $outputOption
-        DownloadVideo $url $outputOption
+        DownloadVideo $url
     }
     catch {
         continue

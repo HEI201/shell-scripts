@@ -6,14 +6,7 @@ $currentPath = Get-Location
 $youtubedlPath = "D:\Dev\repo\youtube-dl"
 $env:PYTHONPATH += ";$youtubedlPath"
 
-$urlsPath = "$currentPath/youtube-urls.txt"
 $youtubedlConfigFile = "$currentPath/youtube-dl.conf"
-
-# if urls file does not exist, exit
-if (-not (Test-Path $urlsPath)) {
-    Write-Host "file $urlsPath does not exist"
-    exit 0
-}
 
 # ensure log file exists
 if (-not (Test-Path "$currentPath\logs")) {
@@ -56,19 +49,55 @@ function DownloadVideo {
     Add-Content -Path "$currentPath\logs\download.log" -Value "[$timestamp] $url"
 }
 
-function  getUrls {
-    $urls = Get-Content -Path $urlsPath
-    # filter out the comment line and the empty line
-    $urls = $urls | Where-Object { $_ -notmatch "^#" } | Where-Object { $_ -ne "" }
+function  getUrlItems {
+    $restApi = "http://127.0.0.1:3000/not-download"
+    $body = @{
+        key1 = "value1"
+        key2 = "value2"
+    } | ConvertTo-Json
+    
+    $response = Invoke-RestMethod -Uri $restApi -Method Post -Body $body -ContentType "application/json"
+
+    # get urls from response {data:[{url:'xxx'}]}
+    $urls = $response.data
+    
     return $urls
 }
+function  updateDownloadStatus {
+    param (
+        $url
+    )
 
-$urls = getUrls
+    $restApi = "http://127.0.0.1:3000/download"
+    $body = @{
+        url = $url
+    } | ConvertTo-Json
+
+    try {
+        $response = Invoke-RestMethod -Uri $restApi -Method Post -Body $body -ContentType "application/json"
+
+        if ($response.status -ne 0) {
+            # log error
+            $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+            Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] $url : udpate download status failed ${response.message} "
+        }    
+    }
+    catch {
+        # log error
+        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+        Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] $url : udpate download status failed ${_.Exception.Message} "
+    }
+    
+    
+}
+$urlItems = getUrlItems
 
 # loop through the list of URLs
-foreach ($url in $urls) {
+foreach ($item in $urlItems) {
     try {
-        DownloadVideo $url
+        Write-Host $item.url
+        DownloadVideo $item.url
+        updateDownloadStatus $item.url
     }
     catch {
         continue

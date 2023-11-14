@@ -13,17 +13,6 @@ if (-not (Test-Path "$currentPath\logs")) {
     New-Item -Path "$currentPath\logs" -ItemType Directory
 }
 
-# add subtitles to the video without re-encoding
-function AddSubtitles {
-    param (
-        $videoPath,
-        $subtitlesPath,
-        $outputPath
-    )
-
-    & ffmpeg -i $videoPath -i $subtitlesPath -c copy -scodec mov_text $outputPath
-}
-
 function DownloadVideo {
     param (
         $url
@@ -47,6 +36,8 @@ function DownloadVideo {
 
     # write success log to the log file
     Add-Content -Path "$currentPath\logs\download.log" -Value "[$timestamp] $url"
+
+    updateDownloadStatus $url
 }
 
 function  getUrlItems {
@@ -95,9 +86,7 @@ $urlItems = getUrlItems
 # loop through the list of URLs
 foreach ($item in $urlItems) {
     try {
-        Write-Host $item.url
         DownloadVideo $item.url
-        updateDownloadStatus $item.url
     }
     catch {
         continue

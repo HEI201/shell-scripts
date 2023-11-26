@@ -15,10 +15,10 @@ if (-not (Test-Path "$currentPath\logs")) {
 
 function DownloadVideo {
     param (
-        $url
+        $item
     )
 
-    python -m youtube_dl $url --config-location $youtubedlConfigFile
+    python -m youtube_dl $item.url --config-location $youtubedlConfigFile
     $exitStatus = $LASTEXITCODE
 
     Write-Host "exit status: $exitStatus"
@@ -29,15 +29,15 @@ function DownloadVideo {
     # if the exit status is not 0, throw an exception
     if ($exitStatus -ne 0) {
         # write error log to the log file
-        Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] $url : exit status: $exitStatus"
+        Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] ${item.id} : exit status: $exitStatus"
 
         throw "exit status: $exitStatus"
     }
 
     # write success log to the log file
-    Add-Content -Path "$currentPath\logs\download.log" -Value "[$timestamp] $url"
+    Add-Content -Path "$currentPath\logs\download.log" -Value "[$timestamp] ${item.id}"
 
-    updateDownloadStatus $url
+    updateDownloadStatus $item
 }
 
 function  getUrlItems {
@@ -54,41 +54,53 @@ function  getUrlItems {
     
     return $urls
 }
+
 function  updateDownloadStatus {
     param (
-        $url
+        $item
     )
 
     $restApi = "http://127.0.0.1:3000/download"
     $body = @{
-        url = $url
+        url = $item.url
     } | ConvertTo-Json
 
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     try {
         $response = Invoke-RestMethod -Uri $restApi -Method Post -Body $body -ContentType "application/json"
 
         if ($response.status -ne 0) {
             # log error
-            $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-            Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] $url : udpate download status failed ${response.message} "
+            Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] ${item.id} : udpate download status failed ${response.message} "
         }    
     }
     catch {
         # log error
-        $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-        Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] $url : udpate download status failed ${_.Exception.Message} "
+        Add-Content -Path "$currentPath\logs\error.log" -Value "[$timestamp] ${item.id} : udpate download status failed ${_.Exception.Message} "
     }
-    
-    
 }
-$urlItems = getUrlItems
 
-# loop through the list of URLs
-foreach ($item in $urlItems) {
-    try {
-        DownloadVideo $item.url
+function Start-Download {
+    
+    $urlItems = getUrlItems
+    
+    # loop through the list of URLs
+    foreach ($item in $urlItems) {
+        try {
+            DownloadVideo $item
+        }
+        catch {
+            continue
+        }
     }
-    catch {
-        continue
+
+    # sleep 5 seconds
+    Start-Sleep -Seconds 5
+
+    $urlItems = getUrlItems
+    if ($urlItems.Count -gt 0) {
+        Start-Download
     }
 }
+
+Start-Download

@@ -1,31 +1,46 @@
 # if already running, exit
-Write-Output "Starting trojan...."
 $processName = "trojan*"
 $process = Get-Process -Name $processName -ErrorAction SilentlyContinue
 if ($null -ne $process) {
-    Write-Host "Already running"
-    Read-Host -Prompt "Press Enter to exit"
+    # get the path of the process
+    $processPath = $process.Path
+    Write-Host "Trojan is already running at $processPath"
+    Write-Host "exit ..."
     exit 0
 }
-# ask which one to start
-# bitesme.vip
-# or love2.vip
-# prompt to select
-$trojanName = Read-Host -Prompt "Which trojan to start? (1. bitesme.vip or 2. love2.vip)"
-if ($trojanName -eq "1") {
-    Write-Host "Using bitesme.vip"
-    $trojanName = "bitesme.vip"
-} elseif ($trojanName -eq "2") {
-    Write-Host "Using love2.vip"
-    $trojanName = "love2.vip"
-} else {
-    Write-Host "Invalid input"
-    Write-Host "Using default: bitesme.vip"
-    $trojanName = "bitesme.vip"
+
+# read the directory in ${env:PortableProgram}
+# list the directories
+$dirs = Get-ChildItem -Path ${env:PortableProgram} -Directory
+# filter the directories with trojan-cli
+$dirs = $dirs | Where-Object { $_.Name -like "trojan-cli*" }
+# if no directory found, exit
+if ($null -eq $dirs) {
+    Write-Host "No trojan-cli directory found"
+    Write-Host "exit ..."
+    exit 0
 }
 
-# set the path to the trojan
-$trojanPath = "${env:PortableProgram}/trojan-cli-${trojanName}"
+# ask which one to start
+# prompt to select
+Write-Host "Select the trojan-cli directory to start"
+$index = 1
+foreach ($dir in $dirs) {
+    Write-Host "$index. $dir"
+    $index++
+}
+$selection = Read-Host -Prompt "Enter the number"
+$selection = [int]$selection
+if ($selection -lt 1 -or $selection -gt $dirs.Length) {
+    Write-Host "Invalid selection"
+    # default to the first one
+    $selection = 1
+}
+
+# set the path to the selected directory
+$selectedTrojanFolder = $dirs[$selection - 1].Name
+Write-Host "Starting ${selectedTrojanFolder} ..."
+$trojanPath = "${env:PortableProgram}/${selectedTrojanFolder}"
 
 # set working directory
 Set-Location $trojanPath
